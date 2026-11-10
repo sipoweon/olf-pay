@@ -365,9 +365,48 @@ function listen() {
     rec = null;
     if (heard) return openExpense(null, heard);
     closeSheet();
-    toast(error === 'not-allowed' || error === 'service-not-allowed' ? 'Mikrofon ist nicht erlaubt' : error === 'network' ? 'Spracheingabe braucht Internet' : 'Ich habe nichts verstanden');
+    if (!error || error === 'no-speech') toast('Ich habe nichts verstanden');
+    else if (error === 'network') toast('Spracheingabe braucht Internet');
+    else if (error !== 'aborted') micHelp(error);
   };
-  try { r.start(); } catch { rec = null; closeSheet(); toast('Spracheingabe geht hier leider nicht'); }
+  try { r.start(); } catch { rec = null; closeSheet(); micHelp('start'); }
+}
+
+/**
+ * Vor dem Zuhören die Mikrofon-Freigabe klären. Auf manchen Handys fragt die
+ * Spracherkennung nicht selbst nach – dann lösen wir die Abfrage hier aus.
+ */
+async function startVoice() {
+  let state = 'unknown';
+  try { state = (await navigator.permissions.query({ name: 'microphone' })).state; } catch { /* Browser kennt die Abfrage nicht */ }
+  if (state === 'denied') return micHelp('not-allowed');
+  if (state === 'prompt' && navigator.mediaDevices?.getUserMedia) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((t) => t.stop()); // sofort wieder freigeben, sonst blockiert es die Erkennung
+    } catch (err) {
+      return micHelp(err?.name === 'NotAllowedError' ? 'not-allowed' : 'audio-capture');
+    }
+  }
+  listen();
+}
+
+function micHelp(code) {
+  const blocked = code === 'not-allowed';
+  const service = code === 'service-not-allowed' || code === 'language-not-supported' || code === 'start';
+  openSheet(`<div class="form">
+    <h2>Mikrofon klappt nicht</h2>
+    ${blocked ? `<p>Chrome darf das Mikrofon für diese Seite gerade nicht nutzen. So gibst du es frei:</p>
+      <ol class="steps"><li>In Chrome auf das Symbol links neben der Adresse tippen → <b>Berechtigungen</b> → <b>Mikrofon</b> → Zulassen.</li>
+      <li>Falls dort nichts steht: Android-Einstellungen → Apps → <b>Chrome</b> → Berechtigungen → <b>Mikrofon</b> erlauben.</li>
+      <li>Bei der installierten App: Symbol lange drücken → App-Info → Berechtigungen.</li></ol>`
+    : service ? `<p>Die Spracherkennung des Handys antwortet nicht. Auf Android läuft sie über die <b>Google-App</b>:</p>
+      <ol class="steps"><li>Android-Einstellungen → Apps → <b>Google</b> → Berechtigungen → <b>Mikrofon</b> erlauben.</li>
+      <li>Prüfen, dass die Google-App nicht deaktiviert ist.</li></ol>`
+    : `<p>Das Mikrofon konnte nicht gestartet werden. Vielleicht nutzt es gerade eine andere App.</p>`}
+    <p class="hint">Bis dahin geht es auch so: „＋ Ausgabe“ öffnen, ins gestrichelte Feld tippen und mit dem Mikrofon der Tastatur diktieren. (Fehlercode: ${esc(code)})</p>
+    <div class="actions"><button type="button" class="btn primary big grow" data-a="close">Okay</button></div>
+  </div>`);
 }
 
 function updateSplitHint() {
@@ -505,7 +544,7 @@ const actions = {
   mic() {
     const ev = store.get(route.id);
     const me = store.me(route.id);
-    if (!me || !ev.members?.[me]) openWho(); else listen();
+    if (!me || !ev.members?.[me]) openWho(); else startVoice();
   },
   edit: (el) => openExpense(el.dataset.id),
   month(el) { statsMonth = el.dataset.m; update(); },
