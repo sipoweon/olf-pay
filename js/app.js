@@ -12,12 +12,11 @@ const CATS = [
 ];
 const cat = (id) => CATS.find((c) => c.id === id) || CATS[CATS.length - 1];
 
-const EMOJIS = ['🦦', '🏝️', '🏠', '💍', '🎉', '🏔️', '🚗', '🎄', '🍕', '❤️'];
+const EMOJIS = ['🦦', '🏝️', '🚀', '🏠', '🎉', '🏔️', '🚗', '🍕', '❤️'];
 const TEMPLATES = [
   { name: 'Alltag', emoji: '🦦' },
   { name: 'Urlaub', emoji: '🏝️' },
-  { name: 'Wohnung', emoji: '🏠' },
-  { name: 'Hochzeit', emoji: '💍' },
+  { name: 'Projekt X', emoji: '🚀' },
 ];
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -330,14 +329,33 @@ function updateSplitHint() {
 }
 
 function emojiRow(current) {
-  return `<div class="chips" id="f-emoji">${EMOJIS.map((e) => chip('pick-emoji', e, e, e === current, 'aria-label="Symbol ' + e + '"')).join('')}</div>`;
+  const own = EMOJIS.includes(current) ? '' : current;
+  return `<div class="field"><span class="lbl">Symbol</span>
+    <div class="chips" id="f-emoji">${EMOJIS.map((e) => chip('pick-emoji', e, e, e === current, 'aria-label="Symbol ' + e + '"')).join('')}
+      <input class="chip own-emoji" id="f-emoji-own" autocomplete="off" placeholder="＋ eigenes" value="${esc(own)}" aria-label="Eigenes Emoji von der Tastatur"></div></div>`;
+}
+
+/** Eigenes Emoji von der Tastatur: nur das zuletzt getippte Zeichen behalten. */
+function onOwnEmoji(input) {
+  let v = input.value.trim();
+  if (v && typeof Intl !== 'undefined' && Intl.Segmenter) {
+    const parts = [...new Intl.Segmenter().segment(v)];
+    v = parts[parts.length - 1].segment;
+  } else {
+    v = v.slice(0, 8);
+  }
+  input.value = v;
+  if (!v) return;
+  F.emoji = v;
+  press($('#f-emoji'), v);
 }
 
 function openNewEvent() {
   F = { emoji: '🦦' };
   openSheet(`<form class="form" data-form="new-event" novalidate>
     <h2>Neues Event</h2>
-    <div class="chips">${TEMPLATES.map((t) => `<button type="button" class="chip" data-a="tpl" data-name="${t.name}" data-emoji="${t.emoji}">${t.emoji} ${t.name}</button>`).join('')}</div>
+    <div class="field"><span class="lbl">Vorschläge zum Antippen</span>
+      <div class="chips">${TEMPLATES.map((t) => `<button type="button" class="chip suggest" data-a="tpl" data-name="${t.name}" data-emoji="${t.emoji}">${t.emoji} ${t.name}</button>`).join('')}</div></div>
     <div class="field"><label class="lbl" for="f-name">Wie heißt es?</label>
       <input class="input" id="f-name" name="name" maxlength="40" placeholder="z. B. Urlaub Portugal"></div>
     ${emojiRow(F.emoji)}
@@ -444,12 +462,13 @@ const actions = {
     el.setAttribute('aria-pressed', String(F.for.has(id)));
     updateSplitHint();
   },
-  'pick-emoji'(el) { F.emoji = el.dataset.v; press(el.parentElement, F.emoji); },
+  'pick-emoji'(el) { F.emoji = el.dataset.v; press(el.parentElement, F.emoji); $('#f-emoji-own').value = ''; },
   'pick-me'(el) { F.me = el.dataset.v; press(el.parentElement, F.me); },
   tpl(el) {
     $('#f-name').value = el.dataset.name;
     F.emoji = el.dataset.emoji;
     press($('#f-emoji'), F.emoji);
+    $('#f-emoji-own').value = '';
   },
   'more-people'() {
     const input = document.createElement('input');
@@ -592,7 +611,10 @@ document.addEventListener('submit', (ev) => {
   forms[form.dataset.form]?.(new FormData(form));
 });
 
-document.addEventListener('input', (ev) => { if (ev.target.id === 'f-amt') updateSplitHint(); });
+document.addEventListener('input', (ev) => {
+  if (ev.target.id === 'f-amt') updateSplitHint();
+  if (ev.target.id === 'f-emoji-own') onOwnEmoji(ev.target);
+});
 document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && !sheetEl.hidden) closeSheet(); });
 
 store.onChange(update);
