@@ -7,4 +7,4 @@
 //   "https://halbehalbe-12345-default-rtdb.europe-west1.firebasedatabase.app"
 // Anleitung: siehe README.md
 
-export const FIREBASE_DB_URL = "";
+export const FIREBASE_DB_URL = "https://halbehalbe-29ae5-default-rtdb.europe-west1.firebasedatabase.app/";
