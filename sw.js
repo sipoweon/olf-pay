@@ -1,5 +1,5 @@
 // Offline-Unterstützung: erst Netz (damit Updates sofort ankommen), sonst Cache.
-const CACHE = 'halbehalbe-v7';
+const CACHE = 'halbehalbe-v8';
 const SHELL = ['./', 'index.html', 'style.css', 'config.js', 'js/app.js', 'js/store.js', 'js/calc.js', 'js/quick.js', 'js/otter.js', 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png'];
 
 self.addEventListener('install', (e) => {

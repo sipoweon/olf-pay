@@ -360,14 +360,22 @@ function listen() {
     if (el && heard) el.textContent = `„${heard}“`;
   };
   r.onerror = (ev) => { error = ev.error; };
+  // Diagnose: kam überhaupt Ton an (A), wurde ein Geräusch (G) oder Sprache (S) erkannt?
+  const seen = { A: 0, G: 0, S: 0 };
+  r.onaudiostart = () => { seen.A = 1; };
+  r.onsoundstart = () => { seen.G = 1; };
+  r.onspeechstart = () => { seen.S = 1; };
   r.onend = () => {
     if (rec !== r) return; // abgebrochen
     rec = null;
     if (heard) return openExpense(null, heard);
-    closeSheet();
-    if (!error || error === 'no-speech') toast('Ich habe nichts verstanden');
-    else if (error === 'network') toast('Spracheingabe braucht Internet');
-    else if (error !== 'aborted') micHelp(error);
+    if (error === 'aborted') return closeSheet();
+    if (error && error !== 'no-speech' && error !== 'network') { closeSheet(); return micHelp(error); }
+    // Nichts verstanden: direkt das Formular zeigen, damit man über die Tastatur diktieren kann.
+    openExpense(null);
+    const quick = $('#f-quick');
+    quick.insertAdjacentHTML('afterend', `<p class="hint">${error === 'network' ? 'Die Spracheingabe braucht Internet.' : 'Ich habe leider nichts verstanden.'} Tippe hier oder nutze das Mikrofon deiner Tastatur. <span class="code">Code A${seen.A}G${seen.G}S${seen.S}${error ? ' ' + esc(error) : ''}</span></p>`);
+    quick.focus();
   };
   try { r.start(); } catch { rec = null; closeSheet(); micHelp('start'); }
 }
