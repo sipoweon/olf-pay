@@ -20,7 +20,7 @@ const ls = {
   del(key) { try { localStorage.removeItem(key); } catch { /* egal */ } },
 };
 
-const K = { known: 'hh.events', outbox: 'hh.outbox', name: 'hh.name', cache: (id) => 'hh.e.' + id };
+const K = { last: 'hh.last', known: 'hh.events', outbox: 'hh.outbox', name: 'hh.name', cache: (id) => 'hh.e.' + id };
 
 const clone = (v) => (v == null ? v : JSON.parse(JSON.stringify(v)));
 
@@ -119,6 +119,13 @@ export const store = {
     delete view[id];
     emit();
   },
+
+  /** Zuletzt geöffnetes Event – damit die App beim Start direkt dort landet. */
+  lastEvent() {
+    const id = ls.get(K.last, null);
+    return known.some((k) => k.id === id) ? id : null;
+  },
+  setLastEvent(id) { ls.set(K.last, id); },
 
   myName() { return ls.get(K.name, ''); },
   setMyName(name) { ls.set(K.name, name); },

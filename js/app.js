@@ -81,6 +81,7 @@ function onRoute() {
   if (route.page === 'event') {
     if (prev.id !== route.id) { statsMonth = 'all'; askedWho = false; }
     store.open(route.id);
+    store.setLastEvent(route.id);
   } else {
     store.close();
   }
@@ -619,6 +620,11 @@ document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && !sheet
 
 store.onChange(update);
 window.addEventListener('hashchange', onRoute);
+// Beim App-Start ohne konkreten Link direkt ins zuletzt geöffnete Event springen.
+if (!location.hash || location.hash === '#/' || location.hash === '#') {
+  const last = store.lastEvent();
+  if (last) history.replaceState(null, '', '#/e/' + last);
+}
 onRoute();
 
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
