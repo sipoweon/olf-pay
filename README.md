@@ -1,4 +1,4 @@
-# halbe halbe 🦦
+# Olf-Pay 🦦
 
 Ausgaben teilen, ganz otterleicht. Ohne Anmeldung, ohne Werbung, ohne Build-Schritt.
 

@@ -123,7 +123,7 @@ function homeView() {
 
   return `<header class="hero">
       ${otter({ mood: 'happy', hold: 'coin', size: 150 })}
-      <h1>halbe halbe</h1>
+      <h1>Olf-Pay</h1>
       <p>Ausgaben teilen, ganz otterleicht.</p>
     </header>
     <section class="stack">
@@ -607,7 +607,7 @@ const actions = {
   },
   async share() {
     const ev = store.get(route.id);
-    try { await navigator.share({ title: `halbe halbe: ${ev.meta.name}`, text: `Mach mit bei „${ev.meta.name}“ auf halbe halbe`, url: eventUrl(route.id) }); } catch { /* abgebrochen */ }
+    try { await navigator.share({ title: `Olf-Pay: ${ev.meta.name}`, text: `Mach mit bei „${ev.meta.name}“ auf Olf-Pay`, url: eventUrl(route.id) }); } catch { /* abgebrochen */ }
   },
 };
 
@@ -654,7 +654,7 @@ const forms = {
 
   join(fd) {
     const m = String(fd.get('link') || '').trim().match(/(?:\/e\/|^)([A-Za-z0-9]{16,})\/?(?:stats)?$/);
-    if (!m) return showError('Das sieht nicht nach einem halbe-halbe-Link aus.');
+    if (!m) return showError('Das sieht nicht nach einem Olf-Pay-Link aus.');
     closeSheet();
     location.hash = '#/e/' + m[1];
   },

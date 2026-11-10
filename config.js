@@ -1,4 +1,4 @@
-// Sync-Einstellung für halbe halbe.
+// Sync-Einstellung für Olf-Pay.
 //
 // Leer lassen  -> die App speichert alles nur auf diesem Gerät (zum Ausprobieren).
 // URL eintragen -> Events werden live zwischen allen Geräten mit dem Event-Link geteilt.
