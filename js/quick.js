@@ -5,7 +5,7 @@
 import { parseAmount, today } from './calc.js';
 
 const KEYWORDS = {
-  einkauf: ['aldi', 'lidl', 'rewe', 'edeka', 'penny', 'netto', 'kaufland', 'dm', 'rossmann', 'müller', 'supermarkt', 'einkauf', 'einkaufen', 'eingekauft', 'lebensmittel', 'bäcker', 'bäckerei', 'metzger', 'wochenmarkt', 'markt', 'drogerie', 'getränke', 'getränkemarkt', 'biomarkt', 'denns', 'alnatura', 'tegut', 'globus', 'norma', 'spar', 'billa', 'hofer', 'migros', 'coop'],
+  einkauf: ['aldi', 'lidl', 'rewe', 'edeka', 'penny', 'netto', 'kaufland', 'simmel', 'dm', 'rossmann', 'müller', 'supermarkt', 'einkauf', 'einkaufen', 'eingekauft', 'lebensmittel', 'bäcker', 'bäckerei', 'metzger', 'wochenmarkt', 'markt', 'drogerie', 'getränke', 'getränkemarkt', 'biomarkt', 'denns', 'alnatura', 'tegut', 'globus', 'norma', 'spar', 'billa', 'hofer', 'migros', 'coop'],
   wohnung: ['miete', 'strom', 'gas', 'heizung', 'nebenkosten', 'internet', 'wlan', 'rundfunk', 'rundfunkbeitrag', 'ikea', 'möbel', 'baumarkt', 'obi', 'hornbach', 'bauhaus', 'putzmittel', 'wohnung', 'haushalt', 'hausrat', 'handwerker', 'schrank', 'lampe', 'waschmaschine', 'staubsauger'],
   essen: ['restaurant', 'essen', 'pizza', 'pizzeria', 'döner', 'burger', 'sushi', 'café', 'cafe', 'kaffee', 'frühstück', 'brunch', 'mittagessen', 'abendessen', 'lieferando', 'lieferdienst', 'imbiss', 'eis', 'eisdiele', 'bar', 'kneipe', 'cocktail', 'cocktails', 'bier', 'biergarten', 'mcdonalds', 'asiate', 'italiener', 'grieche', 'inder'],
   freizeit: ['kino', 'konzert', 'theater', 'museum', 'schwimmbad', 'zoo', 'eintritt', 'ticket', 'tickets', 'festival', 'bowling', 'club', 'party', 'netflix', 'spotify', 'sauna', 'therme', 'minigolf', 'klettern', 'bouldern', 'fitnessstudio'],
