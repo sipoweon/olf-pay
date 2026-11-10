@@ -1,6 +1,7 @@
 import { store } from './store.js';
 import * as C from './calc.js';
 import { otter } from './otter.js';
+import { parseQuick } from './quick.js';
 
 const CATS = [
   { id: 'einkauf', emoji: '🛒', name: 'Einkauf' },
@@ -31,6 +32,8 @@ let route = { page: 'home' };
 let statsMonth = 'all';
 let askedWho = false;
 let F = null; // Zustand des offenen Formulars
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null; // laufende Spracherkennung
 
 // ---------- kleine Helfer ----------
 
@@ -154,7 +157,7 @@ function eventView(ev) {
       <a href="#/e/${id}/stats" ${route.tab === 'stats' ? 'aria-current="page"' : ''}>Auswertung</a>
     </nav>
     ${route.tab === 'stats' ? statsView(ev) : listView(ev)}
-    <div class="fab-wrap"><button class="btn primary big fab" data-a="add">＋ Ausgabe</button></div>`;
+    <div class="fab-wrap"><div class="fab-row"><button class="btn primary big fab" data-a="add">＋ Ausgabe</button>${SR ? '<button class="btn primary big mic" data-a="mic" aria-label="Ausgabe einsprechen">🎤</button>' : ''}</div></div>`;
 }
 
 function balanceCard(ev) {
@@ -268,6 +271,7 @@ function openSheet(html) {
 }
 
 function closeSheet() {
+  if (rec) { const r = rec; rec = null; try { r.abort(); } catch { /* lief nicht mehr */ } }
   sheetEl.hidden = true;
   sheetEl.innerHTML = '';
   F = null;
@@ -277,7 +281,7 @@ function closeSheet() {
 const chip = (action, value, label, pressed, extra = '') =>
   `<button type="button" class="chip" data-a="${action}" data-v="${esc(value)}" aria-pressed="${!!pressed}" ${extra}>${label}</button>`;
 
-function openExpense(expId) {
+function openExpense(expId, spoken = '') {
   const ev = store.get(route.id);
   const mem = members(ev);
   const me = store.me(route.id);
@@ -300,6 +304,7 @@ function openExpense(expId) {
 
   openSheet(`<form class="form" data-form="expense" novalidate>
     <h2>${old ? 'Ausgabe ändern' : 'Neue Ausgabe'}</h2>
+    ${old ? '' : `<input id="f-quick" class="input quick" autocomplete="off" placeholder="Schnell diktieren oder tippen: „5 € Aldi“" aria-label="Schnelleingabe als Satz">`}
     <label class="amount"><input id="f-amt" name="amt" inputmode="decimal" autocomplete="off" placeholder="0,00" value="${old ? C.fmtInput(old.amt) : ''}" aria-label="Betrag in Euro"><span>€</span></label>
     <div class="cats">${CATS.map((c) => `<button type="button" class="cat c-${c.id}" data-a="pick-cat" data-v="${c.id}" aria-pressed="${F.cat === c.id}"><span>${c.emoji}</span>${c.name}</button>`).join('')}</div>
     <input id="f-note" name="note" class="input" maxlength="80" placeholder="Wofür genau? (optional)" value="${esc(old?.note || '')}" aria-label="Notiz">
@@ -316,7 +321,53 @@ function openExpense(expId) {
     </div>
   </form>`);
   updateSplitHint();
-  if (!old) $('#f-amt').focus();
+  if (spoken) { $('#f-quick').value = spoken; applyQuick(spoken); }
+  else if (!old) $('#f-amt').focus();
+}
+
+/** Satz aus der Schnelleingabe auf die Formularfelder verteilen. */
+function applyQuick(text) {
+  if (!F) return;
+  const q = parseQuick(text, members(store.get(route.id)), store.me(route.id));
+  if (q.amt) $('#f-amt').value = C.fmtInput(q.amt);
+  if (q.cat || q.note) { F.cat = q.cat || 'sonstiges'; press($('.cats', sheetEl), F.cat); }
+  $('#f-note').value = q.note;
+  if (q.by) { F.by = q.by; press($('#f-by'), F.by); }
+  if (q.for) {
+    F.for = new Set(q.for);
+    $$('#f-for [data-v]').forEach((b) => b.setAttribute('aria-pressed', String(F.for.has(b.dataset.v))));
+  }
+  if (q.date) $('#f-date').value = q.date;
+  updateSplitHint();
+}
+
+/** Mikrofon: zuhören, dann das ausgefüllte Formular zum Bestätigen zeigen. */
+function listen() {
+  let heard = '', error = '';
+  const r = new SR();
+  rec = r;
+  r.lang = 'de-DE';
+  r.interimResults = true;
+  openSheet(`<div class="form">
+    <div class="center-s">${otter({ mood: 'happy', hold: 'none', size: 120, cls: 'bob' })}</div>
+    <h2>Ich höre zu …</h2>
+    <p class="heard" id="f-heard">Sag zum Beispiel: „5 Euro für Aldi“</p>
+    <div class="actions"><button type="button" class="btn grow" data-a="close">Abbrechen</button></div>
+  </div>`);
+  r.onresult = (ev) => {
+    heard = [...ev.results].map((x) => x[0].transcript).join(' ').trim();
+    const el = $('#f-heard');
+    if (el && heard) el.textContent = `„${heard}“`;
+  };
+  r.onerror = (ev) => { error = ev.error; };
+  r.onend = () => {
+    if (rec !== r) return; // abgebrochen
+    rec = null;
+    if (heard) return openExpense(null, heard);
+    closeSheet();
+    toast(error === 'not-allowed' || error === 'service-not-allowed' ? 'Mikrofon ist nicht erlaubt' : error === 'network' ? 'Spracheingabe braucht Internet' : 'Ich habe nichts verstanden');
+  };
+  try { r.start(); } catch { rec = null; closeSheet(); toast('Spracheingabe geht hier leider nicht'); }
 }
 
 function updateSplitHint() {
@@ -450,6 +501,11 @@ const actions = {
     const ev = store.get(route.id);
     const me = store.me(route.id);
     if (!me || !ev.members?.[me]) openWho(); else openExpense(null);
+  },
+  mic() {
+    const ev = store.get(route.id);
+    const me = store.me(route.id);
+    if (!me || !ev.members?.[me]) openWho(); else listen();
   },
   edit: (el) => openExpense(el.dataset.id),
   month(el) { statsMonth = el.dataset.m; update(); },
@@ -614,6 +670,7 @@ document.addEventListener('submit', (ev) => {
 
 document.addEventListener('input', (ev) => {
   if (ev.target.id === 'f-amt') updateSplitHint();
+  if (ev.target.id === 'f-quick') applyQuick(ev.target.value);
   if (ev.target.id === 'f-emoji-own') onOwnEmoji(ev.target);
 });
 document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && !sheetEl.hidden) closeSheet(); });

@@ -1,6 +1,6 @@
 // Offline-Unterstützung: erst Netz (damit Updates sofort ankommen), sonst Cache.
-const CACHE = 'halbehalbe-v5';
-const SHELL = ['./', 'index.html', 'style.css', 'config.js', 'js/app.js', 'js/store.js', 'js/calc.js', 'js/otter.js', 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png'];
+const CACHE = 'halbehalbe-v6';
+const SHELL = ['./', 'index.html', 'style.css', 'config.js', 'js/app.js', 'js/store.js', 'js/calc.js', 'js/quick.js', 'js/otter.js', 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
