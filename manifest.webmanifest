@@ -3,7 +3,7 @@
   "short_name": "Olf-Pay",
   "description": "Ausgaben teilen, ganz otterleicht.",
   "lang": "de",
-  "id": "/halbehalbe/",
+  "id": "/olf-pay/",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

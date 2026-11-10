@@ -13,7 +13,7 @@ Ausgaben teilen, ganz otterleicht. Ohne Anmeldung, ohne Werbung, ohne Build-Schr
 ### 1. Seite veröffentlichen (GitHub Pages)
 
 Im Repository: **Settings → Pages → Build and deployment → Source: „Deploy from a branch“ → Branch `main`, Ordner `/ (root)` → Save.**
-Nach ein, zwei Minuten läuft die App unter `https://sipoweon.github.io/halbehalbe/`.
+Nach ein, zwei Minuten läuft die App unter `https://sipoweon.github.io/olf-pay/`.
 
 Ohne Schritt 2 funktioniert sie schon, speichert aber nur auf dem jeweiligen Gerät.
 
