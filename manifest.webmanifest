@@ -3,6 +3,7 @@
   "short_name": "halbe halbe",
   "description": "Ausgaben teilen, ganz otterleicht.",
   "lang": "de",
+  "id": "/halbehalbe/",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
