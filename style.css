@@ -260,3 +260,5 @@ a { color: inherit; text-decoration: none; }
 .own-emoji { width: 7.5em; text-align: center; font-size: 1rem; }
 .own-emoji:focus { outline: none; border-color: var(--teal); }
 .own-emoji:not(:placeholder-shown) { border-color: var(--teal); background: color-mix(in srgb, var(--teal) 14%, var(--surface)); }
+
+.area { padding: 12px 14px; font: 500 .8rem/1.4 ui-monospace, monospace; resize: vertical; }

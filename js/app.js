@@ -411,8 +411,52 @@ function openSettings() {
       <input class="input" name="new" maxlength="24" placeholder="＋ Neue Person" aria-label="Neue Person"></div></div>
     <div class="field"><span class="lbl">Ich bin</span>
       <div class="chips" id="f-iam">${members(ev).map((m) => chip('pick-me', m.id, avatar(m, true) + esc(m.name), m.id === me)).join('')}</div></div>
+    <button type="button" class="btn ghost small" data-a="import">Einträge aus anderer App importieren …</button>
     <div class="actions"><button type="button" class="btn danger" data-a="forget">Vom Gerät entfernen</button><button class="btn primary big grow">Speichern</button></div>
   </form>`);
+}
+
+function openImport() {
+  openSheet(`<form class="form" data-form="import" novalidate>
+    <h2>Einträge importieren</h2>
+    <p>Füge hier die vorbereitete Import-Liste ein. Die Einträge landen in „${esc(store.get(route.id).meta.name)}“.</p>
+    <textarea class="input area" id="f-import" name="data" rows="8" spellcheck="false" autocapitalize="off" placeholder='[{"date":"2026-10-03","amount":12.5,"cat":"einkauf","note":"Rewe","by":"Pascal","for":["Pascal","Anna"]}]' aria-label="Import-Liste"></textarea>
+    <p class="error" id="f-err" hidden></p>
+    <div class="actions"><button class="btn primary big grow">Importieren</button></div>
+  </form>`);
+}
+
+/** Import-Liste prüfen und in Ausgaben umwandeln. Wirft einen Fehler mit verständlichem Text. */
+function parseImport(text, ev) {
+  let list;
+  try { list = JSON.parse(text); } catch { throw new Error('Das ist keine gültige Import-Liste.'); }
+  if (!Array.isArray(list) || !list.length) throw new Error('Die Liste ist leer.');
+  const byName = Object.fromEntries(members(ev).map((m) => [m.name.trim().toLowerCase(), m.id]));
+  const who = (name, i) => {
+    const id = byName[String(name ?? '').trim().toLowerCase()];
+    if (!id) throw new Error(`Eintrag ${i + 1}: „${name}“ ist in diesem Event nicht dabei.`);
+    return id;
+  };
+  const now = Date.now();
+  const updates = {};
+  list.forEach((e, i) => {
+    const amt = typeof e.amount === 'number' ? Math.round(e.amount * 100) : C.parseAmount(e.amount);
+    if (!amt || amt <= 0) throw new Error(`Eintrag ${i + 1}: Betrag fehlt.`);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(e.date || '')) throw new Error(`Eintrag ${i + 1}: Datum fehlt (JJJJ-MM-TT).`);
+    const exp = { amt, by: who(e.by, i), date: e.date, ts: now + i };
+    if (e.type === 'transfer') {
+      exp.type = 'transfer';
+      exp.to = who(e.to, i);
+    } else {
+      const forIds = (Array.isArray(e.for) && e.for.length ? e.for : members(ev).map((m) => m.name)).map((n) => who(n, i));
+      exp.for = Object.fromEntries(forIds.map((id) => [id, true]));
+      exp.cat = CATS.some((c) => c.id === e.cat) ? e.cat : 'sonstiges';
+      const note = String(e.note || '').trim().slice(0, 80);
+      if (note) exp.note = note;
+    }
+    updates['expenses/' + C.uid() + i] = exp;
+  });
+  return updates;
 }
 
 function openSettle(from, to, amount) {
@@ -446,6 +490,7 @@ const actions = {
   'new-event': openNewEvent,
   join: openJoin,
   settings: openSettings,
+  import: openImport,
   add() {
     const ev = store.get(route.id);
     const me = store.me(route.id);
@@ -587,6 +632,15 @@ const forms = {
     closeSheet();
     toast('Gespeichert');
     update();
+  },
+
+  import(fd) {
+    let updates;
+    try { updates = parseImport(String(fd.get('data') || ''), store.get(route.id)); }
+    catch (err) { return showError(err.message); }
+    store.patch(route.id, updates);
+    closeSheet();
+    toast(`${Object.keys(updates).length} Einträge importiert 🦦`);
   },
 
   settle(fd) {
