@@ -1,0 +1,12 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "events": {
+      "$eventId": {
+        ".read": "$eventId.length >= 16",
+        ".write": "$eventId.length >= 16"
+      }
+    }
+  }
+}
