@@ -405,9 +405,9 @@ function micHelp(code) {
   openSheet(`<div class="form">
     <h2>Mikrofon klappt nicht</h2>
     ${blocked ? `<p>Chrome darf das Mikrofon für diese Seite gerade nicht nutzen. So gibst du es frei:</p>
-      <ol class="steps"><li>In Chrome auf das Symbol links neben der Adresse tippen → <b>Berechtigungen</b> → <b>Mikrofon</b> → Zulassen.</li>
-      <li>Falls dort nichts steht: Android-Einstellungen → Apps → <b>Chrome</b> → Berechtigungen → <b>Mikrofon</b> erlauben.</li>
-      <li>Bei der installierten App: Symbol lange drücken → App-Info → Berechtigungen.</li></ol>`
+      <ol class="steps"><li>Chrome-Menü ⋮ → Einstellungen → <b>Website-Einstellungen</b> → <b>Mikrofon</b>: Der Schalter muss an sein („Erst fragen“), und diese Seite darf nicht unter „Blockiert“ stehen.</li>
+      <li>Android-Einstellungen → Apps → <b>Chrome</b> → Berechtigungen → <b>Mikrofon</b> erlauben.</li>
+      <li>Danach hier noch einmal auf 🎤 tippen. Jetzt sollte Chrome nachfragen.</li></ol>`
     : service ? `<p>Die Spracherkennung des Handys antwortet nicht. Auf Android läuft sie über die <b>Google-App</b>:</p>
       <ol class="steps"><li>Android-Einstellungen → Apps → <b>Google</b> → Berechtigungen → <b>Mikrofon</b> erlauben.</li>
       <li>Prüfen, dass die Google-App nicht deaktiviert ist.</li></ol>`
